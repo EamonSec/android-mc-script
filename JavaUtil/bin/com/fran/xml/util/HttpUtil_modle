@@ -1,0 +1,313 @@
+package com.fran.xml.util;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.net.URLConnection;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.HttpStatus;
+import org.apache.http.NameValuePair;
+import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.entity.UrlEncodedFormEntity;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.params.HttpConnectionParams;
+import org.apache.http.protocol.HTTP;
+import org.json.JSONException;
+
+import com.google.gson.Gson;
+import com.u_me.u_me_jushetuan.expection.ConnectException;
+import com.u_me.u_me_jushetuan.util.common.beanutil.StringUtil;
+
+import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.net.ConnectivityManager;
+
+public class HttpUtil {
+	public static final String WEB_CON_URL = "";
+	public static final String LOGIN_FAIL = "0";
+	public static final String LOGIN_SUCCESS = "1";
+	public static final String REQUEST_ERROR = "2";
+	public static final String NETWORK_ERROR = "3";
+	public static final String NETWORK_EXCEPTION = "4";
+	public static final String NOT_CONNECT_NETWORK = "5";
+	String json;
+
+	public static List<NameValuePair> getDefaultPairList()
+	{
+		return new ArrayList<NameValuePair>();
+	}
+
+	/**
+	 * 判断网络是否连接上
+	 * 
+	 * @param context
+	 * @return: true or false
+	 */
+	public static boolean hasNetWork(Context context)
+	{
+
+		if (((ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE))
+				.getActiveNetworkInfo() != null)
+		{
+			return true;
+		} else
+		{
+			return false;
+		}
+	}
+
+	/**
+	 * 通过POST方式拿到原始response(已用EntityUtil包装过)
+	 * 
+	 * @param url
+	 * @param values键值对
+	 * @return
+	 * @throws JSONException
+	 * @throws ConnectException如果response.getStatusLine
+	 *             ().getStatusCode()！=200则抛出异常
+	 */
+	public static String getResultByPOST(String url, List<NameValuePair> values) throws ConnectException, JSONException
+	{
+		HttpPost hp = new HttpPost(url);
+		HttpResponse response = null;
+		HttpClient client = null;
+		if (client == null)
+			client = new DefaultHttpClient();
+		synchronized (client)
+		{
+			try
+			{
+				HttpConnectionParams.setConnectionTimeout(client.getParams(), 5000);
+				HttpConnectionParams.setSoTimeout(client.getParams(), 10000);
+				HttpEntity he = new UrlEncodedFormEntity(values, HTTP.UTF_8);
+				hp.setEntity(he);
+				response = client.execute(hp);
+				int code = response.getStatusLine().getStatusCode();
+				if (code == 200)
+				{
+					String json = readFromStream(response.getEntity().getContent());
+					Thread.sleep(100);
+					return json;
+				} else
+				{
+					throw new ConnectException(code);
+				}
+			} catch (Exception e)
+			{
+				e.printStackTrace();
+			} finally
+			{
+				if (response != null)
+				{
+					response = null;
+				}
+				if (client != null)
+				{
+					client = null;
+				}
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * 返回一个需要转换成json的字符串 get方法
+	 * 
+	 * @param context
+	 * @param sUrl
+	 *            :连接的url
+	 * @return
+	 */
+	public static String getResult(Context context, String sUrl)
+	{
+		HttpResponse response = null;
+		HttpClient client = null;
+		if (client == null)
+			client = new DefaultHttpClient();
+		synchronized (client)
+		{
+			String result = null;
+			HttpGet httpGet = new HttpGet(sUrl);
+			try
+			{
+				
+				 * HttpConnectionParams.setConnectionTimeout(client.getParams(),
+				 * 2000); HttpConnectionParams.setSoTimeout(client.getParams(),
+				 * 2000);
+				 
+				response = client.execute(httpGet);
+				if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK)
+				{
+					result = readFromStream((response.getEntity().getContent()));
+					Thread.sleep(100);
+					if (!StringUtil.isEmpty(result))
+					{
+						result = result.trim();
+					} else
+					{
+						result = REQUEST_ERROR;
+					}
+					return result;
+				}
+
+			} catch (ClientProtocolException e)
+			{
+				e.printStackTrace();
+			} catch (IOException e)
+			{
+				e.printStackTrace();
+			} catch (InterruptedException e)
+			{
+				e.printStackTrace();
+			} catch (IllegalStateException e)
+			{
+				e.printStackTrace();
+			} catch (Exception e)
+			{
+				e.printStackTrace();
+			} finally
+			{
+				if (response != null)
+				{
+					response = null;
+				}
+				if (client != null)
+				{
+					client = null;
+				}
+			}
+		}
+		return sUrl;
+	}
+
+	/**
+	 * 通过图片的路径Url从服务器下载Bitmap
+	 * 
+	 * @param sUrl
+	 * @return
+	 */
+	public static Bitmap getInputStreamByUrlConnection(String sUrl)
+	{
+		// TODO Auto-generated method stub
+		try
+		{
+			URL url = new URL(sUrl);
+			URLConnection urlConnection = url.openConnection();
+			InputStream is = urlConnection.getInputStream();
+			Bitmap bitmap = BitmapFactory.decodeStream(is);
+			return bitmap;
+		} catch (Exception e)
+		{
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return null;
+		}
+	}
+
+	/**
+	 * 提供一个公用下载方法
+	 * 
+	 * @param url
+	 * @return inputStream
+	 * @throws ConnectException
+	 */
+	public static InputStream getStream(String url)
+	{
+		InputStream input = null;
+		try
+		{
+			URL surl = new URL(url);
+			HttpURLConnection conn = (HttpURLConnection) surl.openConnection();
+			conn.setRequestMethod("POST");
+			conn.setReadTimeout(5000);
+			conn.setConnectTimeout(5000);
+			int code = conn.getResponseCode();
+			if (code != 200)
+			{
+				throw new ConnectException(code);
+			}
+			input = conn.getInputStream();
+			Thread.sleep(100);
+			return input;
+		} catch (Exception e)
+		{
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return null;
+	}
+
+	/**
+	 * 检查url是否合法
+	 * 
+	 * @param sUrl
+	 * @return
+	 */
+	public static boolean checkURL(String sUrl)
+	{
+		if (StringUtil.isEmpty(sUrl))
+		{
+			return false;
+		}
+		HttpURLConnection conn = null;
+		try
+		{
+			URL url = new URL(sUrl);
+			conn = (HttpURLConnection) url.openConnection();
+			conn.setConnectTimeout(5000);
+			int responsecode = conn.getResponseCode();
+			if (responsecode == 200)
+			{
+				return true;
+			} else
+			{
+				return false;
+			}
+		} catch (IOException e)
+		{
+			return false;
+		}
+
+	}
+
+	/**
+	 * 将实体类转化成json
+	 */
+	public static String toJson(Object o)
+	{
+		Gson gson = new Gson();
+		String json = gson.toJson(o);
+		return json;
+	}
+
+	/**
+	 * 将流转换成字符串
+	 * 
+	 * @param inputStream
+	 * @return String
+	 * @throws Exception
+	 */
+	public static String readFromStream(InputStream inputStream) throws Exception
+	{
+		StringBuffer sb = new StringBuffer();
+		BufferedReader br = new BufferedReader(new InputStreamReader(inputStream, HTTP.UTF_8));
+		String data = "";
+		while ((data = br.readLine()) != null)
+		{
+			sb.append(data);
+		}
+		return sb.toString();
+	}
+
+}

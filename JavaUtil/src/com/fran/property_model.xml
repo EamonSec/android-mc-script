@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<property>
+	<property-wrapper>
+		<describe level="3">
+		    <!-- 注释 1=单行注释 2=多行注释 3=文本注释 -->
+			这是描述文件,level代表文本注释
+		</describe>
+		<!-- 请求码，一个请求码对应一个请求方法名，异步处理类名，封装类方法名 -->
+		<requestCode>findSingleUser</requestCode>
+		<method 
+		    name="findSingleUser"
+		    args="String userNo"
+			return="String" />
+		<!-- 异步处理完成后回调返回数据 -->
+		<callBack 
+		    name="OnFetched" 
+            packageName="com.u_me.u_me_jushetuan.data.jushetuan_data.userModel.temp"/>
+		<!-- returnType,返回的json格式的类型,	1代表单个实体,2代表集合实体,
+		resultEntity代表用于解析的实体 -->
+		<task 
+		    package="com.u_me.u_me_jushetuan.data.jushetuan_data.userModel.task"
+		    className="android.os.AsyncTask" 
+		    resultType="1"
+		    resultEntity="FindSingleUser"
+		    containType="" />
+		<package>com.u_me.u_me_jushetuan</package><!-- 应用包名 -->
+		<factory 
+		    name="DataFactory" 
+		    package="com.u_me.u_me_jushetuan.data.jushetuan_data.userModel.temp" /><!-- 工厂模式，工厂的名字和包名 -->
+		<net url="jushetuanVS2/u.action" baseUrl="http://192.168.1.10:8080/"><!-- 这里填写访问括号之前的内容,一定是两个参数，String url,List<NameValuePair> -->
+			HttpUtil.getResultByPOST
+		</net>
+	</property-wrapper>
+    
+ 
+
+</property>

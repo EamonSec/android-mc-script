@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<property>
+	<property-wrapper>
+		<describe level="3">
+		</describe>
+		<requestCode>findSingleUser</requestCode>
+		<method 
+		    name="findSingleUser"
+		    args="String userNo"
+			return="String" />
+		<callBack 
+		    name="OnFetched" 
+            packageName="com.u_me.u_me_jushetuan.data.jushetuan_data.userModel.temp"/>
+		<task 
+		    package="com.u_me.u_me_jushetuan.data.jushetuan_data.userModel.task"
+		    className="android.os.AsyncTask" 
+		    resultType="1"
+		    resultEntity="FindSingleUser"
+		    containType="" />
+		<package>com.u_me.u_me_jushetuan</package>
+		<factory 
+		    name="DataFactory" 
+		    package="com.u_me.u_me_jushetuan.data.jushetuan_data.userModel.temp" />
+		<net url="jushetuanVS2/u.action" baseUrl="http://192.168.1.10:8080/">
+			HttpUtil.getResultByPOST
+		</net>
+	</property-wrapper>
+    
+ 
+    
+
+</property>
